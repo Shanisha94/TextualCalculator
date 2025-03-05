@@ -21,4 +21,8 @@ public class VariablesManagerService {
         }
         throw new InvalidInputException(String.format("Variable %s is not found", variable));
     }
+
+    public Map<String, Integer> getVariables() {
+        return variables;
+    }
 }

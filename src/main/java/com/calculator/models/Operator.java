@@ -1,14 +1,55 @@
 package com.calculator.models;
 
 public enum Operator {
-    ADD("+", 1),
-    SUBTRACT("-", 1),
-    MULTIPLY("*", 2),
-    DIVIDE("/", 2),
-    MODULUS("%", 2),
-    EXPONENT("^", 3),
-    OPEN_PARENTHESIS("(", 1),
-    CLOSING_PARENTHESIS(")", 4);
+    ADD("+", 1) {
+        @Override
+        public int apply(int firstValue, int secondValue) {
+            return firstValue + secondValue;
+        }
+    },
+    SUBTRACT("-", 1) {
+        @Override
+        public int apply(int firstValue, int secondValue) {
+            return firstValue - secondValue;
+        }
+    },
+    MULTIPLY("*", 2) {
+        @Override
+        public int apply(int firstValue, int secondValue) {
+            return firstValue * secondValue;
+        }
+    },
+    DIVIDE("/", 2) {
+        @Override
+        public int apply(int firstValue, int secondValue) {
+            if (secondValue == 0) throw new ArithmeticException("Division by zero");
+            return firstValue / secondValue;
+        }
+    },
+    MODULUS("%", 2) {
+        @Override
+        public int apply(int firstValue, int secondValue) {
+            return firstValue % secondValue;
+        }
+    },
+    EXPONENT("^", 3) {
+        @Override
+        public int apply(int firstValue, int secondValue) {
+            return firstValue ^ secondValue;
+        }
+    },
+    OPEN_PARENTHESIS("(", 1) {
+        @Override
+        public int apply(int oldValue, int newValue) {
+            return 0; // TODO
+        }
+    },
+    CLOSING_PARENTHESIS(")", 4) {
+        @Override
+        public int apply(int oldValue, int newValue) {
+            return 0; // TODO
+        }
+    };
 
     private final String symbol;
     private final int precedence;
@@ -26,21 +67,8 @@ public enum Operator {
         return precedence;
     }
 
-    public static Operator fromSymbol(String symbol) {
-        for (Operator op : values()) {
-            if (op.symbol.equals(symbol)) {
-                return op;
-            }
-        }
-        throw new IllegalArgumentException("Unknown operator: " + symbol);
-    }
-
     public static boolean hasHigherPrecedence(Operator op1, Operator op2) {
         return op1.getPrecedence() > op2.getPrecedence();
-    }
-
-    public static boolean hasEqualPrecedence(Operator op1, Operator op2) {
-        return op1.getPrecedence() == op2.getPrecedence();
     }
 
     public static boolean isOperator(String symbol) {
@@ -51,4 +79,7 @@ public enum Operator {
         }
         return false;
     }
+
+    // Abstract method to apply operation
+    public abstract int apply(int oldValue, int newValue);
 }

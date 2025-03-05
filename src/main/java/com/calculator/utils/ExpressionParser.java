@@ -5,6 +5,7 @@ import com.calculator.exceptions.*;
 public class ExpressionParser {
 
     public static String findAssignmentVariable(String expr) throws InvalidInputException {
+        // TODO: move to fromString Expression?
         // Regex to match assignment statements (variable before '=', '+=', '-=', '*=', '/=')
         Pattern pattern = Pattern.compile("^\\s*([a-zA-Z_]\\w*)\\s*(=|\\+=|-=|\\*=|/=)\\s*");
         Matcher matcher = pattern.matcher(expr);
@@ -14,4 +15,14 @@ public class ExpressionParser {
         }
         throw new InvalidInputException("Variable assignment is not found");
     }
+
+    public static boolean isNumeric(String str) {
+        try {
+            Integer.parseInt(str);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
 }

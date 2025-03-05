@@ -1,9 +1,14 @@
 package com.calculator;
+import com.calculator.services.ExpressionCalculatorService;
+
+import java.beans.Expression;
 import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
         List<String> expressions = readUserInput();
+        ExpressionCalculatorService expressionCalculatorService = new ExpressionCalculatorService();
+        expressionCalculatorService.evaluateExpression(expressions);
     }
 
     private static List<String> readUserInput() {

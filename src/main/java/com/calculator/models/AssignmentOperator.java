@@ -45,14 +45,4 @@ public enum AssignmentOperator {
 
     // Abstract method to apply operation
     public abstract int apply(int oldValue, int newValue);
-
-    // Convert a symbol to an enum
-    public static AssignmentOperator fromSymbol(String symbol) {
-        for (AssignmentOperator op : values()) {
-            if (op.symbol.equals(symbol)) {
-                return op;
-            }
-        }
-        throw new IllegalArgumentException("Invalid assignment operator: " + symbol);
-    }
 }
