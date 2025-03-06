@@ -2,19 +2,19 @@ package com.calculator.models.operators;
 
 import com.calculator.models.PrecedenceLevel;
 
-public class AddOperator implements IOperator {
+public class CloseParenthesisOperator implements IOperator {
     @Override
     public int apply(int firstValue, int secondValue) {
-        return firstValue + secondValue;
+        throw new UnsupportedOperationException("Parentheses are not directly applied to values.");
     }
 
     @Override
     public String getSymbol() {
-        return "+";
+        return ")";
     }
 
     @Override
     public int getPrecedence() {
-        return PrecedenceLevel.LOW.getLevel();
+        return PrecedenceLevel.PARENTHESIS.getLevel();
     }
 }

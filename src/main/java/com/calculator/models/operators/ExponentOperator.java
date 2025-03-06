@@ -2,19 +2,19 @@ package com.calculator.models.operators;
 
 import com.calculator.models.PrecedenceLevel;
 
-public class AddOperator implements IOperator {
+public class ExponentOperator implements IOperator {
     @Override
     public int apply(int firstValue, int secondValue) {
-        return firstValue + secondValue;
+        return (int) Math.pow(firstValue, secondValue); // Use Math.pow for exponentiation
     }
 
     @Override
     public String getSymbol() {
-        return "+";
+        return "^";
     }
 
     @Override
     public int getPrecedence() {
-        return PrecedenceLevel.LOW.getLevel();
+        return PrecedenceLevel.HIGH.getLevel();
     }
 }

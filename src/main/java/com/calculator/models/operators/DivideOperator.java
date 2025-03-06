@@ -2,19 +2,22 @@ package com.calculator.models.operators;
 
 import com.calculator.models.PrecedenceLevel;
 
-public class AddOperator implements IOperator {
+public class DivideOperator implements IOperator {
     @Override
     public int apply(int firstValue, int secondValue) {
-        return firstValue + secondValue;
+        if (secondValue == 0) {
+            throw new ArithmeticException("Division by zero");
+        }
+        return firstValue / secondValue;
     }
 
     @Override
     public String getSymbol() {
-        return "+";
+        return "/";
     }
 
     @Override
     public int getPrecedence() {
-        return PrecedenceLevel.LOW.getLevel();
+        return PrecedenceLevel.MEDIUM.getLevel();
     }
 }

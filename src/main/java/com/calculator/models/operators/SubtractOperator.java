@@ -2,15 +2,15 @@ package com.calculator.models.operators;
 
 import com.calculator.models.PrecedenceLevel;
 
-public class AddOperator implements IOperator {
+public class SubtractOperator implements IOperator {
     @Override
     public int apply(int firstValue, int secondValue) {
-        return firstValue + secondValue;
+        return firstValue - secondValue;
     }
 
     @Override
     public String getSymbol() {
-        return "+";
+        return "-";
     }
 
     @Override
