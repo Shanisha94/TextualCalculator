@@ -15,6 +15,6 @@ public class OpenParenthesisOperator implements IOperator {
 
     @Override
     public int getPrecedence() {
-        return PrecedenceLevel.PARENTHESIS.getLevel();
+        return PrecedenceLevel.LOW.getLevel();
     }
 }

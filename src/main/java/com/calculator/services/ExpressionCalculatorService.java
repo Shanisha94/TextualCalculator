@@ -3,17 +3,11 @@ import com.calculator.exceptions.InvalidInputException;
 import com.calculator.factories.OperatorFactory;
 import com.calculator.models.AssignmentOperator;
 import com.calculator.models.Expression;
-import com.calculator.models.operators.CloseParenthesisOperator;
-import com.calculator.models.operators.IOperator;
-import com.calculator.models.operators.IUnaryOperator;
-import com.calculator.models.operators.OpenParenthesisOperator;
+import com.calculator.models.operators.*;
 import com.calculator.utils.ExpressionParser;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Stack;
+import java.util.*;
 // TODO: 1. Yes, you can assume there are spaces between each number or operator in the expression.
 //        2. Yes, variable names can be longer than one character.
 //        3. Supporting all types of operators, such as % or ^, is not mandatory.
@@ -32,12 +26,12 @@ public class ExpressionCalculatorService {
         operators = new Stack<>();
     }
 
-    public Map<String, Integer> calculateExpressions(List<String> expressions) throws InvalidInputException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    public String calculateExpressions(List<String> expressions) throws InvalidInputException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         for(String rawExpression : expressions) {
             Expression expression = ExpressionParser.parse(rawExpression);
             evaluateExpression(expression);
         }
-        return variablesManagerService.getVariables();
+        return prettyPrintResult();
     }
 
     private void evaluateExpression(Expression expression) throws InvalidInputException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
@@ -55,18 +49,12 @@ public class ExpressionCalculatorService {
             values.push(Integer.parseInt(expression_part));
         } else if (variablesManagerService.getVariables().containsKey(expression_part)) {
             values.push(variablesManagerService.getVariable(expression_part));
-        } else if (expression_part.startsWith("++") || expression_part.startsWith("--")) {
+        } else if (expression_part.contains(IncrementOperator.getSymbol()) || expression_part.contains(DecrementOperator.getSymbol())) {
             Optional<IUnaryOperator> operator = OperatorFactory.getUnaryOperator(expression_part);
             if (operator.isPresent()) {
-                IUnaryOperator unaryOperator = operator.get();
-                int currentValue = variablesManagerService.getVariable(unaryOperator.getVariable());
-                int newValue = unaryOperator.apply(currentValue);
-                variablesManagerService.putVariable(unaryOperator.getVariable(), newValue);
-                if (unaryOperator.isPostOperation()) {
-                    values.push(currentValue);
-                } else {
-                    values.push(newValue);
-                }
+                handleUnaryOperator(operator.get());
+            } else {
+                throw new InvalidInputException(expression_part);
             }
         }
         else {
@@ -123,5 +111,30 @@ public class ExpressionCalculatorService {
             }
             operators.push(currentOperator);
         }
+    }
+
+    private void handleUnaryOperator(IUnaryOperator unaryOperator) throws InvalidInputException {
+        int currentValue = variablesManagerService.getVariable(unaryOperator.getVariable());
+        int newValue = unaryOperator.apply(currentValue);
+        variablesManagerService.putVariable(unaryOperator.getVariable(), newValue);
+        if (unaryOperator.isPostOperation()) {
+            values.push(currentValue);
+        } else {
+            values.push(newValue);
+        }
+    }
+
+    public String prettyPrintResult() throws InvalidInputException {
+        StringBuilder sb =new StringBuilder();
+        sb.append("(");
+        List<String> keys = new ArrayList<>(variablesManagerService.getVariables().keySet());
+        for (int i = 0; i < keys.size(); i++) {
+            sb.append(keys.get(i)).append("=").append(variablesManagerService.getVariable(keys.get(i)));
+            if (i < keys.size() - 1) {
+                sb.append(",");
+            }
+        }
+        sb.append(")");
+        return sb.toString();
     }
 }

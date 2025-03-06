@@ -7,7 +7,7 @@ public class Main {
         List<String> expressions = readUserInput();
         ExpressionCalculatorService expressionCalculatorService = new ExpressionCalculatorService();
         try {
-            Map<String, Integer> variablesResult = expressionCalculatorService.calculateExpressions(expressions);
+            String variablesResult = expressionCalculatorService.calculateExpressions(expressions);
             System.out.println(variablesResult);
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
@@ -15,7 +15,7 @@ public class Main {
     }
 
     private static List<String> readUserInput() {
-        System.out.println("Please enter expressions to calculate:");
+        System.out.println("Please enter expressions to calculate and enter END to see the result:");
         List<String> expressions = new ArrayList<>();
         Scanner scanner = new Scanner(System.in);
         while (scanner.hasNextLine()) {
