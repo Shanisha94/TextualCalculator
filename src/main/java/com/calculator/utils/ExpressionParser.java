@@ -1,9 +1,6 @@
 package com.calculator.utils;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.*;
 import com.calculator.models.AssignmentOperator;
 import com.calculator.models.Expression;
@@ -30,13 +27,19 @@ public class ExpressionParser {
 
     private static List<String> tokenizeExpression(String expression) {
         List<String> tokens = new ArrayList<>();
-
-        // Regex to match variables, numbers, operators, and pre/post increments
-        final Pattern EXPRESSIONS_PATTERN = Pattern.compile("\\+\\+|--|\\w+|[+\\-*/()]");
-        Matcher matcher = EXPRESSIONS_PATTERN.matcher(expression);
-
-        while (matcher.find()) {
-            tokens.add(matcher.group());
+        Scanner scanner = new Scanner(expression);
+        while (scanner.hasNext()) {
+            String token = scanner.next();
+            if (token.startsWith("(")) {
+                tokens.add("(");
+                tokens.add(token.substring(1));
+            }
+            else if (token.endsWith(")")) {
+                tokens.add(token.substring(0, token.length() - 1));
+                tokens.add(")");
+            } else {
+                tokens.add(token);
+            }
         }
 
         return tokens;
