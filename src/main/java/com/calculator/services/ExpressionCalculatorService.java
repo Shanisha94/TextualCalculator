@@ -5,33 +5,71 @@ import com.calculator.models.AssignmentOperator;
 import com.calculator.models.Expression;
 import com.calculator.models.operators.*;
 import com.calculator.utils.ExpressionParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-// TODO: 1. Yes, you can assume there are spaces between each number or operator in the expression.
-//        2. Yes, variable names can be longer than one character.
-//        3. Supporting all types of operators, such as % or ^, is not mandatory.
-//        4. Yes, you should support parentheses.
-// TODO: validator
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+// TODO: docstrings
 // TODO: TESTS
 
-public class ExpressionCalculatorService {
+public class ExpressionCalculatorService implements IProcessor {
+    private static final Logger logger = LoggerFactory.getLogger(ExpressionCalculatorService.class);
     private final VariablesManagerService variablesManagerService;
     private final Stack<Integer> values;
     private final Stack<IOperator> operators;
+    private final BlockingQueue<Expression> inputQueue;
+    private final Thread workerThread;
+    private volatile boolean isRunning = true;
 
-    public ExpressionCalculatorService() {
+    public ExpressionCalculatorService(BlockingQueue<Expression> inputQueue) {
         variablesManagerService = new VariablesManagerService();
         values = new Stack<>();
         operators = new Stack<>();
+        this.inputQueue = inputQueue;
+        this.workerThread = new Thread(this::processQueue);
     }
 
-    public String calculateExpressions(List<String> expressions) throws InvalidInputException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        for(String rawExpression : expressions) {
-            Expression expression = ExpressionParser.parse(rawExpression);
-            evaluateExpression(expression);
+    @Override
+    public void start() {
+        logger.info("Starting ExpressionCalculatorService...");
+        workerThread.start();
+    }
+
+    @Override
+    public void stop() {
+        logger.info("Stopping ExpressionCalculatorService...");
+        isRunning = false;
+        workerThread.interrupt();
+        workerThread.interrupt();
+        try {
+            workerThread.join();
+            logger.info("Worker thread stopped successfully.");
+        } catch (InterruptedException e) {
+            logger.error("Interrupted while stopping worker thread.", e);
+            Thread.currentThread().interrupt();
         }
-        return prettyPrintResult();
+    }
+
+    @Override
+    public void processQueue() {
+        logger.info("Worker thread started. Waiting for expressions...");
+        while (isRunning || !inputQueue.isEmpty()) {
+            try {
+                Expression expression = inputQueue.poll(1, TimeUnit.SECONDS);
+                if (expression != null) {
+                    evaluateExpression(expression);
+                    logger.debug("Evaluate: {}", expression);
+                }
+            } catch (InterruptedException e) {
+                logger.warn("Worker thread interrupted. Stopping...");
+                Thread.currentThread().interrupt();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private void evaluateExpression(Expression expression) throws InvalidInputException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
@@ -102,6 +140,8 @@ public class ExpressionCalculatorService {
             }
             if (!operators.isEmpty() && operators.peek() instanceof OpenParenthesisOperator) {
                 operators.pop(); // Remove '(' from the stack
+            } else {
+                throw new InvalidInputException("Mismatched parentheses");
             }
         }
         else {
@@ -114,6 +154,9 @@ public class ExpressionCalculatorService {
     }
 
     private void handleUnaryOperator(IUnaryOperator unaryOperator) throws InvalidInputException {
+        if (!variablesManagerService.getVariables().containsKey(unaryOperator.getVariable())) {
+            throw new InvalidInputException(String.format("Variable %s is used before being assigned", unaryOperator.getVariable()));
+        }
         int currentValue = variablesManagerService.getVariable(unaryOperator.getVariable());
         int newValue = unaryOperator.apply(currentValue);
         variablesManagerService.putVariable(unaryOperator.getVariable(), newValue);
@@ -137,4 +180,5 @@ public class ExpressionCalculatorService {
         sb.append(")");
         return sb.toString();
     }
+
 }

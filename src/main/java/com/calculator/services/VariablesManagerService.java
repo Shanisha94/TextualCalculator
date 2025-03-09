@@ -11,10 +11,6 @@ public class VariablesManagerService {
         variables.put(variable, value);
     }
 
-    public void putVariable(String variable, int value, String assignmentOperator) {
-        variables.put(variable, value);
-    }
-
     public int getVariable(String variable) throws InvalidInputException {
         if (variables.containsKey(variable)) {
             return variables.get(variable);
