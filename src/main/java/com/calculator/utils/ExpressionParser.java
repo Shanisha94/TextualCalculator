@@ -1,5 +1,6 @@
 package com.calculator.utils;
 import java.lang.reflect.InvocationTargetException;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.regex.*;
 import com.calculator.models.AssignmentOperator;
@@ -14,7 +15,7 @@ public class ExpressionParser {
         Matcher matcher = ASSIGNMENT_PATTERN.matcher(input);
 
         if (!matcher.find()) {
-            throw new IllegalArgumentException("Invalid expression: " + input);
+            throw new IllegalArgumentException("Invalid expression, assignment pattern was not found");
         }
 
         String assignedVariable = matcher.group(1);
@@ -84,5 +85,10 @@ public class ExpressionParser {
         return Optional.of((unaryOperators.get(operator))
                 .getDeclaredConstructor(String.class, boolean.class)
                 .newInstance(variable, isPostOperator));
+    }
+
+    public static String formatNumber(float number) {
+        DecimalFormat df = new DecimalFormat("#.##"); // Removes trailing .0
+        return df.format(number);
     }
 }

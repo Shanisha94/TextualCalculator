@@ -1,7 +1,7 @@
 package com.calculator.models.operators;
 
 public interface IOperator {
-    int apply(int firstValue, int secondValue);
+    float apply(float firstValue, float secondValue);
 
     String getSymbol();
 

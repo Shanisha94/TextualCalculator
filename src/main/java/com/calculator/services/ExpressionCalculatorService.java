@@ -5,20 +5,21 @@ import com.calculator.models.AssignmentOperator;
 import com.calculator.models.Expression;
 import com.calculator.models.operators.*;
 import com.calculator.utils.ExpressionParser;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import static com.calculator.utils.ExpressionParser.formatNumber;
 // TODO: docstrings
-// TODO: TESTS
 
 public class ExpressionCalculatorService implements IProcessor {
-    private static final Logger logger = LoggerFactory.getLogger(ExpressionCalculatorService.class);
+    private static final Logger logger = LogManager.getLogger(ExpressionCalculatorService.class);
     private final VariablesManagerService variablesManagerService;
-    private final Stack<Integer> values;
+    private final Stack<Float> values;
     private final Stack<IOperator> operators;
     private final BlockingQueue<Expression> inputQueue;
     private final Thread workerThread;
@@ -32,21 +33,24 @@ public class ExpressionCalculatorService implements IProcessor {
         this.workerThread = new Thread(this::processQueue);
     }
 
+    public VariablesManagerService getVariablesManagerService() {
+        return variablesManagerService;
+    }
+
     @Override
     public void start() {
-        logger.info("Starting ExpressionCalculatorService...");
+        logger.debug("Starting ExpressionCalculatorService...");
         workerThread.start();
     }
 
     @Override
     public void stop() {
-        logger.info("Stopping ExpressionCalculatorService...");
+        logger.debug("Stopping ExpressionCalculatorService...");
         isRunning = false;
-        workerThread.interrupt();
         workerThread.interrupt();
         try {
             workerThread.join();
-            logger.info("Worker thread stopped successfully.");
+            logger.debug("Worker thread stopped successfully.");
         } catch (InterruptedException e) {
             logger.error("Interrupted while stopping worker thread.", e);
             Thread.currentThread().interrupt();
@@ -55,7 +59,7 @@ public class ExpressionCalculatorService implements IProcessor {
 
     @Override
     public void processQueue() {
-        logger.info("Worker thread started. Waiting for expressions...");
+        logger.debug("Worker thread started. Waiting for expressions...");
         while (isRunning || !inputQueue.isEmpty()) {
             try {
                 Expression expression = inputQueue.poll(1, TimeUnit.SECONDS);
@@ -64,7 +68,7 @@ public class ExpressionCalculatorService implements IProcessor {
                     logger.debug("Evaluate: {}", expression);
                 }
             } catch (InterruptedException e) {
-                logger.warn("Worker thread interrupted. Stopping...");
+                logger.debug("Worker thread interrupted. Stopping...");
                 Thread.currentThread().interrupt();
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -76,7 +80,7 @@ public class ExpressionCalculatorService implements IProcessor {
         for (String part : expression.expressionParts()) {
             handleExpressionPart(part);
         }
-        int result = calculateStackResult();
+        float result = calculateStackResult();
         evaluateAssignmentVariable(expression, result);
     }
 
@@ -84,7 +88,7 @@ public class ExpressionCalculatorService implements IProcessor {
         if (OperatorFactory.isOperator(expression_part)) {
             handleOperator(expression_part);
         } else if (ExpressionParser.isNumeric(expression_part)) {
-            values.push(Integer.parseInt(expression_part));
+            values.push(Float.parseFloat(expression_part));
         } else if (variablesManagerService.getVariables().containsKey(expression_part)) {
             values.push(variablesManagerService.getVariable(expression_part));
         } else if (expression_part.contains(IncrementOperator.getSymbol()) || expression_part.contains(DecrementOperator.getSymbol())) {
@@ -100,19 +104,19 @@ public class ExpressionCalculatorService implements IProcessor {
         }
     }
 
-    private void evaluateAssignmentVariable(Expression expression, int calculatedValue) {
+    private void evaluateAssignmentVariable(Expression expression, float calculatedValue) {
         AssignmentOperator assignmentOperator = expression.assignmentOperator();
-        int oldValue = variablesManagerService.getVariables().getOrDefault(expression.assignedVariable(), 0);
-        int newValue = assignmentOperator.apply(oldValue, calculatedValue);
+        float oldValue = variablesManagerService.getVariables().getOrDefault(expression.assignedVariable(), 0.0F);
+        float newValue = assignmentOperator.apply(oldValue, calculatedValue);
         variablesManagerService.putVariable(expression.assignedVariable(), newValue);
     }
 
-    private int calculateStackResult() {
+    private float calculateStackResult() {
         while (!operators.isEmpty() && !values.isEmpty()) {
-            int b = values.pop();
-            int a = values.pop();
+            float b = values.pop();
+            float a = values.pop();
             IOperator operator = operators.pop();
-            int result = operator.apply(a, b);
+            float result = operator.apply(a, b);
             values.push(result);
         }
         return values.pop();
@@ -122,8 +126,8 @@ public class ExpressionCalculatorService implements IProcessor {
         if (values.size() < 2) {
             throw new InvalidInputException("Invalid expression: Not enough values");
         }
-        int rightValue = values.pop();
-        int leftValue = values.pop();
+        float rightValue = values.pop();
+        float leftValue = values.pop();
         IOperator operator = operators.pop();
         values.push(operator.apply(leftValue, rightValue));
     }
@@ -157,8 +161,8 @@ public class ExpressionCalculatorService implements IProcessor {
         if (!variablesManagerService.getVariables().containsKey(unaryOperator.getVariable())) {
             throw new InvalidInputException(String.format("Variable %s is used before being assigned", unaryOperator.getVariable()));
         }
-        int currentValue = variablesManagerService.getVariable(unaryOperator.getVariable());
-        int newValue = unaryOperator.apply(currentValue);
+        float currentValue = variablesManagerService.getVariable(unaryOperator.getVariable());
+        float newValue = unaryOperator.apply(currentValue);
         variablesManagerService.putVariable(unaryOperator.getVariable(), newValue);
         if (unaryOperator.isPostOperation()) {
             values.push(currentValue);
@@ -172,7 +176,7 @@ public class ExpressionCalculatorService implements IProcessor {
         sb.append("(");
         List<String> keys = new ArrayList<>(variablesManagerService.getVariables().keySet());
         for (int i = 0; i < keys.size(); i++) {
-            sb.append(keys.get(i)).append("=").append(variablesManagerService.getVariable(keys.get(i)));
+            sb.append(keys.get(i)).append("=").append(formatNumber(variablesManagerService.getVariable(keys.get(i))));
             if (i < keys.size() - 1) {
                 sb.append(",");
             }

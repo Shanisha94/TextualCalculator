@@ -3,7 +3,7 @@ package com.calculator.models.operators;
 public record DecrementOperator(String variable, boolean postDecrement) implements IUnaryOperator {
 
     @Override
-    public int apply(int value) {
+    public float apply(float value) {
         return value - 1;
     }
 

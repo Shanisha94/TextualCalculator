@@ -2,16 +2,16 @@ package com.calculator;
 import com.calculator.exceptions.InvalidInputException;
 import com.calculator.services.ExpressionCalculatorService;
 import com.calculator.services.ExpressionParserProcessor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 public class Main {
 
-    private static final Logger logger = LoggerFactory.getLogger(Main.class);
+    private static final Logger logger = LogManager.getLogger(Main.class);
     private static final BlockingQueue<String> queue = new LinkedBlockingQueue<>();
     private static final ExpressionParserProcessor parserProcessor = new ExpressionParserProcessor(queue);
     private static final ExpressionCalculatorService calculatorProcessor = new ExpressionCalculatorService(parserProcessor.getOutputQueue());
@@ -48,7 +48,7 @@ public class Main {
     }
 
     private static void stop() {
-        logger.info("Processing finished. Exiting...");
+        logger.debug("Processing finished. Exiting...");
         parserProcessor.stop();
         calculatorProcessor.stop();
     }

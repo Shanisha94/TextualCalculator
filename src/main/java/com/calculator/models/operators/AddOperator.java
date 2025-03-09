@@ -4,7 +4,7 @@ import com.calculator.models.PrecedenceLevel;
 
 public class AddOperator implements IOperator {
     @Override
-    public int apply(int firstValue, int secondValue) {
+    public float apply(float firstValue, float secondValue) {
         return firstValue + secondValue;
     }
 

@@ -4,7 +4,7 @@ import com.calculator.models.PrecedenceLevel;
 
 public class DivideOperator implements IOperator {
     @Override
-    public int apply(int firstValue, int secondValue) {
+    public float apply(float firstValue, float secondValue) {
         if (secondValue == 0) {
             throw new ArithmeticException("Division by zero");
         }

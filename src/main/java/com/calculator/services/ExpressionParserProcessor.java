@@ -5,12 +5,12 @@ import com.calculator.utils.ExpressionParser;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ExpressionParserProcessor implements IProcessor {
 
-    private static final Logger logger = LoggerFactory.getLogger(ExpressionParserProcessor.class);
+    private static final Logger logger = LogManager.getLogger(ExpressionParserProcessor.class);
     private static final BlockingQueue<Expression> outputQueue = new LinkedBlockingQueue<>();
     private final BlockingQueue<String> inputQueue;
     private final Thread workerThread;
@@ -27,18 +27,18 @@ public class ExpressionParserProcessor implements IProcessor {
 
     @Override
     public void start() {
-        logger.info("Starting ExpressionParserProcessor...");
+        logger.debug("Starting ExpressionParserProcessor...");
         workerThread.start();
     }
 
     @Override
     public void stop() {
-        logger.info("Stopping ExpressionParserProcessor...");
+        logger.debug("Stopping ExpressionParserProcessor...");
         isRunning = false;
         workerThread.interrupt();
         try {
             workerThread.join();
-            logger.info("Worker thread stopped successfully.");
+            logger.debug("Worker thread stopped successfully.");
         } catch (InterruptedException e) {
             logger.error("Interrupted while stopping worker thread.", e);
             Thread.currentThread().interrupt();
@@ -47,7 +47,7 @@ public class ExpressionParserProcessor implements IProcessor {
 
     @Override
     public void processQueue() {
-        logger.info("Worker thread started. Waiting for expressions...");
+        logger.debug("Worker thread started. Waiting for expressions...");
         while (isRunning || !inputQueue.isEmpty()) {
             try {
                 String expression = inputQueue.poll(1, TimeUnit.SECONDS);
@@ -58,11 +58,11 @@ public class ExpressionParserProcessor implements IProcessor {
                         outputQueue.offer(parsedExpression);
                         logger.debug("Processed expression: {}", parsedExpression);
                     } catch (Exception e) {
-                        logger.error("Failed to process: {}", expression);
+                        logger.error("Failed to process: {} {}", expression, e.getMessage());
                     }
                 }
             } catch (InterruptedException e) {
-                logger.warn("Worker thread interrupted. Stopping...");
+                logger.debug("Worker thread interrupted. Stopping...");
                 Thread.currentThread().interrupt();
             }
         }

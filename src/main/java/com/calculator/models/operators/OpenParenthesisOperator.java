@@ -4,7 +4,7 @@ import com.calculator.models.PrecedenceLevel;
 
 public class OpenParenthesisOperator implements IOperator {
     @Override
-    public int apply(int firstValue, int secondValue) {
+    public float apply(float firstValue, float secondValue) {
         throw new UnsupportedOperationException("Parentheses are not directly applied to values.");
     }
 

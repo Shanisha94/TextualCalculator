@@ -3,33 +3,33 @@ package com.calculator.models;
 public enum AssignmentOperator {
     ASSIGN("=") {
         @Override
-        public int apply(int oldValue, int newValue) {
-            return newValue; // Direct assignment
+        public float apply(float oldValue, float newValue) {
+            return newValue;
         }
     },
     ADD_ASSIGN("+=") {
         @Override
-        public int apply(int oldValue, int newValue) {
-            return oldValue + newValue; // Addition assignment
+        public float apply(float oldValue, float newValue) {
+            return oldValue + newValue;
         }
     },
     SUBTRACT_ASSIGN("-=") {
         @Override
-        public int apply(int oldValue, int newValue) {
-            return oldValue - newValue; // Subtraction assignment
+        public float apply(float oldValue, float newValue) {
+            return oldValue - newValue;
         }
     },
     MULTIPLY_ASSIGN("*=") {
         @Override
-        public int apply(int oldValue, int newValue) {
-            return oldValue * newValue; // Multiplication assignment
+        public float apply(float oldValue, float newValue) {
+            return oldValue * newValue;
         }
     },
     DIVIDE_ASSIGN("/=") {
         @Override
-        public int apply(int oldValue, int newValue) {
+        public float apply(float oldValue, float newValue) {
             if (newValue == 0) throw new ArithmeticException("Division by zero");
-            return oldValue / newValue; // Division assignment
+            return oldValue / newValue;
         }
     };
 
@@ -53,5 +53,5 @@ public enum AssignmentOperator {
     }
 
     // Abstract method to apply operation
-    public abstract int apply(int oldValue, int newValue);
+    public abstract float apply(float oldValue, float newValue);
 }
