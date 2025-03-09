@@ -13,8 +13,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 
 class ExpressionCalculatorServiceTest {
@@ -25,7 +23,6 @@ class ExpressionCalculatorServiceTest {
     @BeforeEach
     void setUp() {
         inputQueue = new LinkedBlockingQueue<>();
-        variablesManagerMock = mock(VariablesManagerService.class);
         calculatorService = new ExpressionCalculatorService(inputQueue);
         calculatorService.start();
     }
@@ -118,13 +115,14 @@ class ExpressionCalculatorServiceTest {
         inputQueue.add(new Expression("z", AssignmentOperator.ASSIGN, List.of("1")));
         inputQueue.add(new Expression("i", AssignmentOperator.ASSIGN, List.of("1")));
         inputQueue.add(new Expression("w", AssignmentOperator.ASSIGN, List.of("1")));
+        inputQueue.add(new Expression("x", AssignmentOperator.ASSIGN, List.of("1")));
         inputQueue.add(new Expression("x", AssignmentOperator.ADD_ASSIGN, List.of("i")));
         inputQueue.add(new Expression("y", AssignmentOperator.DIVIDE_ASSIGN, List.of("1", "+", "i")));
         inputQueue.add(new Expression("z", AssignmentOperator.MULTIPLY_ASSIGN, List.of("2", "+", "++i")));
         inputQueue.add(new Expression("w", AssignmentOperator.SUBTRACT_ASSIGN, List.of("2", "+", "i++")));
         Thread.sleep(100);
         assertEquals(3, calculatorService.getVariablesManagerService().getVariable("i"));
-        assertEquals(1, calculatorService.getVariablesManagerService().getVariable("x"));
+        assertEquals(2, calculatorService.getVariablesManagerService().getVariable("x"));
         assertEquals(0.5, calculatorService.getVariablesManagerService().getVariable("y"));
         assertEquals(4, calculatorService.getVariablesManagerService().getVariable("z"));
         assertEquals(-3, calculatorService.getVariablesManagerService().getVariable("w"));

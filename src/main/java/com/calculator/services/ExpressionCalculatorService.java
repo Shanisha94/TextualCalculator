@@ -16,7 +16,6 @@ import static com.calculator.utils.ExpressionParser.formatNumber;
 
 /**
  * Service for evaluating mathematical expressions.
- * <p>
  * This service runs a background thread that processes mathematical expressions from an input queue.
  * It supports standard operators, assignment, and unary operations.
  */
@@ -147,10 +146,14 @@ public class ExpressionCalculatorService implements IProcessor {
      *
      * @param expression The assignment expression.
      * @param calculatedValue The result of the expression.
+     * @throws InvalidInputException If variable is not initialized and has assignment operator that is not '='
      */
-    private void evaluateAssignmentVariable(Expression expression, float calculatedValue) {
+    private void evaluateAssignmentVariable(Expression expression, float calculatedValue) throws InvalidInputException {
         AssignmentOperator assignmentOperator = expression.assignmentOperator();
-        float oldValue = variablesManagerService.getVariables().getOrDefault(expression.assignedVariable(), 0.0F);
+        if (!variablesManagerService.getVariables().containsKey(expression.assignedVariable()) && expression.assignmentOperator() != AssignmentOperator.ASSIGN) {
+            throw new InvalidInputException("Assignment variable is not initialized");
+        }
+        float oldValue = variablesManagerService.getVariables().get(expression.assignedVariable());
         float newValue = assignmentOperator.apply(oldValue, calculatedValue);
         variablesManagerService.putVariable(expression.assignedVariable(), newValue);
     }

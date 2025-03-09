@@ -25,7 +25,7 @@ public class ParenthesisTest {
         Exception exception = assertThrows(UnsupportedOperationException.class, () -> {
             operator.apply(2, 0);
         });
-        assertEquals("Parentheses are not directly applied to values", exception.getMessage());
+        assertEquals("Parentheses are not directly applied to values.", exception.getMessage());
     }
 
 
