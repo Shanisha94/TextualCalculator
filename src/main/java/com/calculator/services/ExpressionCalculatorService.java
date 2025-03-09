@@ -7,15 +7,19 @@ import com.calculator.models.operators.*;
 import com.calculator.utils.ExpressionParser;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-
 import static com.calculator.utils.ExpressionParser.formatNumber;
-// TODO: docstrings
 
+
+/**
+ * Service for evaluating mathematical expressions.
+ * <p>
+ * This service runs a background thread that processes mathematical expressions from an input queue.
+ * It supports standard operators, assignment, and unary operations.
+ */
 public class ExpressionCalculatorService implements IProcessor {
     private static final Logger logger = LogManager.getLogger(ExpressionCalculatorService.class);
     private final VariablesManagerService variablesManagerService;
@@ -25,6 +29,11 @@ public class ExpressionCalculatorService implements IProcessor {
     private final Thread workerThread;
     private volatile boolean isRunning = true;
 
+    /**
+     * Constructs a new ExpressionCalculatorService.
+     *
+     * @param inputQueue The queue containing expressions to process.
+     */
     public ExpressionCalculatorService(BlockingQueue<Expression> inputQueue) {
         variablesManagerService = new VariablesManagerService();
         values = new Stack<>();
@@ -37,12 +46,18 @@ public class ExpressionCalculatorService implements IProcessor {
         return variablesManagerService;
     }
 
+    /**
+     * Starts the background thread to process expressions.
+     */
     @Override
     public void start() {
         logger.debug("Starting ExpressionCalculatorService...");
         workerThread.start();
     }
 
+    /**
+     * Stops the background thread gracefully.
+     */
     @Override
     public void stop() {
         logger.debug("Stopping ExpressionCalculatorService...");
@@ -57,6 +72,9 @@ public class ExpressionCalculatorService implements IProcessor {
         }
     }
 
+    /**
+     * Processes the queue of expressions, evaluating each one.
+     */
     @Override
     public void processQueue() {
         logger.debug("Worker thread started. Waiting for expressions...");
@@ -76,6 +94,16 @@ public class ExpressionCalculatorService implements IProcessor {
         }
     }
 
+    /**
+     * Evaluates a mathematical expression and updates the variable storage.
+     *
+     * @param expression The mathematical expression to evaluate.
+     * @throws InvalidInputException If the expression contains invalid input.
+     * @throws InvocationTargetException If there is an error invoking a method.
+     * @throws NoSuchMethodException If a method is not found during reflection.
+     * @throws InstantiationException If an object instantiation fails.
+     * @throws IllegalAccessException If access to a class is denied.
+     */
     private void evaluateExpression(Expression expression) throws InvalidInputException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         for (String part : expression.expressionParts()) {
             handleExpressionPart(part);
@@ -84,26 +112,42 @@ public class ExpressionCalculatorService implements IProcessor {
         evaluateAssignmentVariable(expression, result);
     }
 
-    private void handleExpressionPart(String expression_part) throws InvalidInputException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
-        if (OperatorFactory.isOperator(expression_part)) {
-            handleOperator(expression_part);
-        } else if (ExpressionParser.isNumeric(expression_part)) {
-            values.push(Float.parseFloat(expression_part));
-        } else if (variablesManagerService.getVariables().containsKey(expression_part)) {
-            values.push(variablesManagerService.getVariable(expression_part));
-        } else if (expression_part.contains(IncrementOperator.getSymbol()) || expression_part.contains(DecrementOperator.getSymbol())) {
-            Optional<IUnaryOperator> operator = OperatorFactory.getUnaryOperator(expression_part);
+    /**
+     * Handles an individual part of an expression.
+     *
+     * @param expressionPart The part of the expression to process.
+     * @throws InvalidInputException If the part is not a valid number, variable, or operator.
+     * @throws InvocationTargetException If an error occurs during method invocation.
+     * @throws NoSuchMethodException If a required method is not found.
+     * @throws InstantiationException If an object cannot be instantiated.
+     * @throws IllegalAccessException If access to a class is denied.
+     */
+    private void handleExpressionPart(String expressionPart) throws InvalidInputException, InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+        if (OperatorFactory.isOperator(expressionPart)) {
+            handleOperator(expressionPart);
+        } else if (ExpressionParser.isNumeric(expressionPart)) {
+            values.push(Float.parseFloat(expressionPart));
+        } else if (variablesManagerService.getVariables().containsKey(expressionPart)) {
+            values.push(variablesManagerService.getVariable(expressionPart));
+        } else if (expressionPart.contains(IncrementOperator.getSymbol()) || expressionPart.contains(DecrementOperator.getSymbol())) {
+            Optional<IUnaryOperator> operator = OperatorFactory.getUnaryOperator(expressionPart);
             if (operator.isPresent()) {
                 handleUnaryOperator(operator.get());
             } else {
-                throw new InvalidInputException(expression_part);
+                throw new InvalidInputException(expressionPart);
             }
         }
         else {
-            throw new InvalidInputException(expression_part);
+            throw new InvalidInputException(expressionPart);
         }
     }
 
+    /**
+     * Evaluates and assigns a value to a variable based on the assignment operator.
+     *
+     * @param expression The assignment expression.
+     * @param calculatedValue The result of the expression.
+     */
     private void evaluateAssignmentVariable(Expression expression, float calculatedValue) {
         AssignmentOperator assignmentOperator = expression.assignmentOperator();
         float oldValue = variablesManagerService.getVariables().getOrDefault(expression.assignedVariable(), 0.0F);
@@ -111,6 +155,11 @@ public class ExpressionCalculatorService implements IProcessor {
         variablesManagerService.putVariable(expression.assignedVariable(), newValue);
     }
 
+    /**
+     * Computes the final result of the expression by processing the operator and value stacks.
+     *
+     * @return The final computed result.
+     */
     private float calculateStackResult() {
         while (!operators.isEmpty() && !values.isEmpty()) {
             float b = values.pop();
@@ -122,6 +171,11 @@ public class ExpressionCalculatorService implements IProcessor {
         return values.pop();
     }
 
+    /**
+     * Processes and applies an operator to the values stack.
+     *
+     * @throws InvalidInputException If there are not enough values in the stack.
+     */
     private void processOperator() throws InvalidInputException {
         if (values.size() < 2) {
             throw new InvalidInputException("Invalid expression: Not enough values");
@@ -132,6 +186,12 @@ public class ExpressionCalculatorService implements IProcessor {
         values.push(operator.apply(leftValue, rightValue));
     }
 
+    /**
+     * Handles standard mathematical operators and parentheses.
+     *
+     * @param operator The operator to process.
+     * @throws InvalidInputException If there is a mismatch in parentheses or operator precedence issues.
+     */
     private void handleOperator(String operator) throws InvalidInputException {
         IOperator currentOperator = OperatorFactory.getOperator(operator);
         if (currentOperator instanceof OpenParenthesisOperator) {
@@ -157,6 +217,12 @@ public class ExpressionCalculatorService implements IProcessor {
         }
     }
 
+    /**
+     * Handles unary operators such as post/pre increment and decrement.
+     *
+     * @param unaryOperator The operator to process.
+     * @throws InvalidInputException If there is a mismatch in unary operator declaration.
+     */
     private void handleUnaryOperator(IUnaryOperator unaryOperator) throws InvalidInputException {
         if (!variablesManagerService.getVariables().containsKey(unaryOperator.getVariable())) {
             throw new InvalidInputException(String.format("Variable %s is used before being assigned", unaryOperator.getVariable()));
@@ -171,6 +237,12 @@ public class ExpressionCalculatorService implements IProcessor {
         }
     }
 
+    /**
+     * Returns a formatted string of all variables and their values.
+     *
+     * @return A string representation of stored variables.
+     * @throws InvalidInputException If there is an issue retrieving values.
+     */
     public String prettyPrintResult() throws InvalidInputException {
         StringBuilder sb =new StringBuilder();
         sb.append("(");
